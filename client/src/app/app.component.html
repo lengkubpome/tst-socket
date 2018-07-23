@@ -1,0 +1,10 @@
+<button (click)="sendMessage()">Send Message</button>
+<button (click)="onDisconnect()">disconnect</button>
+
+<br> {{ message | json}}
+
+<br>
+<button (click)="onCallSerialPortList()">Serial Port</button>
+<br>{{list| json}}
+<br>
+<button (click)="onGetPortConfig()">Config</button>
