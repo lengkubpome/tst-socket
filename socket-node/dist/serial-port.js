@@ -12,16 +12,27 @@ class tstSerialPort {
         this.listPort();
     }
     setup() {
-        this.serialport = new SerialPort(this.portName, {
-            // autoOpen: false,
-            autoOpen: true,
-            baudRate: this.baudRate,
-            dataBits: this.dataBits,
-            stopBits: this.stopBits,
-            parity: this.parity,
-        });
-        this.parser = this.serialport.pipe(new Readline({ delimiter: '\r\n' }));
-        console.log(this.serialport.isOpen);
+        try {
+            this.serialport = new SerialPort(this.portName, {
+                // autoOpen: false,
+                autoOpen: true,
+                baudRate: this.baudRate,
+                dataBits: this.dataBits,
+                stopBits: this.stopBits,
+                parity: this.parity,
+            }, error => {
+                if (error !== null) {
+                    console.log('[SerialPort] setup : %s', error);
+                }
+            });
+            if (!this.serialport.isOpen) {
+                this._isOpen = true;
+            }
+            this.parser = this.serialport.pipe(new Readline({ delimiter: '\r\n' }));
+        }
+        catch (error) {
+            console.log('[SerialPort] setup get catch : %s', error);
+        }
     }
     openPort(config) {
         this.portName = config.portName;
@@ -33,13 +44,6 @@ class tstSerialPort {
         this.serialport.on('open', () => {
             console.log('[Serialport] is open');
         });
-        // this.serialport.on('close', () => {
-        //   console.log('[SerialPort] is close');
-        // });
-        // // Open errors will be emitted as an error event
-        // this.serialport.on('error', err => {
-        //   console.log('[SerialPort] is %s', err);
-        // });
     }
     getData() {
         return new Observable_1.Observable(observer => {
@@ -59,6 +63,7 @@ class tstSerialPort {
             this.NodeTime = setInterval(() => {
                 this.timeInterval++;
                 observer.next(this.timeInterval);
+                console.log(this.timeInterval);
             }, 1000);
         });
     }
@@ -84,13 +89,18 @@ class tstSerialPort {
         });
         return this.ports;
     }
+    closePort() {
+        try {
+            clearInterval(this.NodeTime);
+            this.serialport.close();
+            this._isOpen = false;
+        }
+        catch (error) {
+            console.log(error);
+        }
+    }
     isOpen() {
         return this._isOpen;
-    }
-    closePort() {
-        clearInterval(this.NodeTime);
-        this._isOpen = false;
-        this.serialport.close();
     }
 }
 exports.tstSerialPort = tstSerialPort;

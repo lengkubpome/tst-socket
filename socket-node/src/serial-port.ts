@@ -1,6 +1,6 @@
+
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/of';
-
 import * as SerialPort from 'serialport';
 const Readline = require('@serialport/parser-readline');
 
@@ -22,8 +22,6 @@ export class tstSerialPort {
   private parity;
   private ports = [];
   private parser;
-
-  public onData: Observable<any>;
   private _isOpen = false;
 
   constructor() {
@@ -31,62 +29,32 @@ export class tstSerialPort {
   }
 
   private setup() {
-    this.serialport = new SerialPort(
-      this.portName,
-      {
-        // autoOpen: false,
-        autoOpen: true,
-        baudRate: this.baudRate,
-        dataBits: this.dataBits,
-        stopBits: this.stopBits,
-        parity: this.parity,
-      },
-      // error => {
-      //   console.log('[SerialPort] setup : %s', error);
-      // },
-    );
-    this.parser = this.serialport.pipe(new Readline({ delimiter: '\r\n' }));
- 
- 
-    console.log(this.serialport.isOpen);
-    
+    try {
+      this.serialport = new SerialPort(
+        this.portName,
+        {
+          // autoOpen: false,
+          autoOpen: true,
+          baudRate: this.baudRate,
+          dataBits: this.dataBits,
+          stopBits: this.stopBits,
+          parity: this.parity,
+        },
+        error => {
+          if (error !== null) {
+            console.log('[SerialPort] setup %s', error);
+          }
+        },
+      );
+      if (!this.serialport.isOpen) {
+        this._isOpen = true;
+      }
+      this.parser = this.serialport.pipe(new Readline({ delimiter: '\r\n' }));
+    } catch (error) {
+      console.log('[SerialPort] setup get catch : %s', error);
+    }
   }
 
-  // FIXME: ปรับเปลี่ยนใหม่
-  // public openPort(config: SerialPortConfig): Observable<any> {
-  //   this.portName = config.portName;
-  //   this.baudRate = config.option.baudRate;
-  //   this.dataBits = config.option.dataBits;
-  //   this.stopBits = config.option.stopBits;
-  //   this.parity = config.option.parity;
-
-  //   this.setup();
-  //   this.serialport.open(err => {
-  //     if (err) {
-  //       return console.log('Error opening port:', err.message);
-  //     }
-  //   });
-
-  //   return new Observable<{ state: any; value: any }>(observer => {
-  //     this.serialport.on('open', () => {
-  //       observer.next({ state: 'open_port', value: 'Serialport is open' });
-  //     });
-
-  //     this.serialport.on('close', () => {
-  //       observer.complete();
-  //     });
-  //     // Open errors will be emitted as an error event
-  //     this.serialport.on('error', err => {
-  //       observer.error(err);
-  //     });
-
-  //     this.parser.on('data', (data: string) => {
-  //       // let buff = new Buffer(data, 'ascii');
-  //       console.log(data);
-  //       observer.next({ state: 'get_data', value: data });
-  //     });
-  //   });
-  // }
 
   NodeTime: NodeJS.Timer;
   timeInterval = 0;
@@ -103,25 +71,10 @@ export class tstSerialPort {
     this.serialport.on('open', () => {
       console.log('[Serialport] is open');
     });
-
-
-    // this.serialport.on('close', () => {
-    //   console.log('[SerialPort] is close');
-    // });
-    // // Open errors will be emitted as an error event
-    // this.serialport.on('error', err => {
-    //   console.log('[SerialPort] is %s', err);
-    // });
-
   }
 
-
-
   public getData(): Observable<any> {
-
-
-    return new Observable<any>(observer =>{
-
+    return new Observable<any>(observer => {
       this.serialport.on('close', () => {
         console.log('[SerialPort] is close');
         observer.complete();
@@ -132,18 +85,17 @@ export class tstSerialPort {
         observer.error(err);
       });
 
-
       this.parser.on('data', (data: string) => {
         // let buff = new Buffer(data, 'ascii');
         observer.next(data);
       });
-  
+
       this.NodeTime = setInterval(() => {
         this.timeInterval++;
         observer.next(this.timeInterval);
+        console.log(this.timeInterval);
       }, 1000);
-    })
-   
+    });
   }
 
   public getPortConfig() {
@@ -171,13 +123,17 @@ export class tstSerialPort {
     return this.ports;
   }
 
-  public isOpen() {
-    return this._isOpen;
+  public closePort() {
+    try {
+      clearInterval(this.NodeTime);
+      this.serialport.close();
+      this._isOpen = false;
+    } catch (error) {
+      console.log(error);
+    }
   }
 
-  public closePort() {
-    clearInterval(this.NodeTime);
-    this._isOpen = false;
-    this.serialport.close();
+  public isOpen(): boolean {
+    return this._isOpen;
   }
 }

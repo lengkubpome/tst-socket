@@ -42,21 +42,20 @@ export class WebsocketService {
   }
 
   public callData(): void {
-    const setupSerialPort: SerialPortConfig = {
-      portName: '/dev/tty.usbserial-FTA573YH',
-      option: {
-        baudRate: 4800,
-        dataBits: 7,
-        stopBits: 1,
-        parity: 'even'
-      }
-    };
 
-    // this.socket.emit('serialport_connect', setupSerialPort);
-    this.socket.emit('serialport_connect', this.username);
+    this.socket.emit('serialport_start_data');
   }
+
   public endData(): void {
-    this.socket.emit('serialport_disconnect');
+    this.socket.emit('serialport_stop_data');
+  }
+
+  public openSerialPort() {
+    this.socket.emit('serialport_open');
+  }
+
+  public closeSerialPort() {
+    this.socket.emit('serialport_close');
   }
 
   public callSerialPortList(): void {
@@ -86,9 +85,7 @@ export class WebsocketService {
   // }
   public getData(): Observable<any> {
     return new Observable<any>(observer => {
-      this.socket.on('data', res => {
-        // observer.next(tstConvertSerialPort(res));
-
+      this.socket.on('serialport_get_data', res => {
         observer.next(res);
       });
     });

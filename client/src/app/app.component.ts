@@ -21,7 +21,7 @@ export class AppComponent implements OnInit {
       // .subscribe((res: { state: string; integer: number; decimal: number }) => {
       //   this.message = res;
       // });
-      .subscribe((res) => {
+      .subscribe(res => {
         this.message = res;
       });
 
@@ -39,12 +39,19 @@ export class AppComponent implements OnInit {
     });
   }
 
-  sendMessage() {
+  onConnectData() {
     this.wsService.callData();
   }
 
-  onDisconnect() {
+  onDisconnectData() {
     this.wsService.endData();
+  }
+
+  onOpenSerialPort() {
+    this.wsService.openSerialPort();
+  }
+  onCloseSerialPort() {
+    this.wsService.closeSerialPort();
   }
 
   onCallSerialPortList() {

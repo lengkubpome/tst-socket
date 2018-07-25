@@ -1,8 +1,10 @@
-<button (click)="sendMessage()">Send Message</button>
-<button (click)="onDisconnect()">disconnect</button>
+<button (click)="onConnectData()">Get Data</button>
+<button (click)="onDisconnectData()">disconnect</button>
 
 <br> {{ message | json}}
-
+<br>
+<button (click)="onOpenSerialPort()">Open SerialPort</button>
+<button (click)="onCloseSerialPort()">Close SerialPort</button>
 <br>
 <button (click)="onCallSerialPortList()">Serial Port</button>
 <br>{{list| json}}
