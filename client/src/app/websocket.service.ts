@@ -30,8 +30,7 @@ export class WebsocketService {
     // Listen for connect
     this.socket.on('client_register', () => {
       this.socket.emit('client_register', {
-        username: this.username,
-        mac: this.macAddress
+        username: this.username
       });
     });
 
@@ -42,7 +41,6 @@ export class WebsocketService {
   }
 
   public callData(): void {
-
     this.socket.emit('serialport_start_data');
   }
 
@@ -73,20 +71,38 @@ export class WebsocketService {
       });
     });
   }
+  public broadcastSerialPort(): Observable<any> {
+    return new Observable<any>(observer => {
+      this.socket.on('broadcast_serialport', data => {
+        observer.next(data);
+      });
+    });
+  }
 
-  // public getData(): Observable<{ state: string; integer: number; decimal: number }> {
-  //   return new Observable<{ state: string; integer: number; decimal: number }>(observer => {
-  //     this.socket.on('data', res => {
-  //       // observer.next(tstConvertSerialPort(res));
+  public getData(): Observable<{ state: string; integer: number; decimal: number }> {
+    return new Observable<{ state: string; integer: number; decimal: number }>(observer => {
+      this.socket.on('serialport_get_data', data => {
+        // const result = tstConvertSerialPort(data);
+        observer.next(data);
+        console.log(data);
 
-  //       observer.next(res);
+
+        // observer.next(res);
+      });
+    });
+  }
+  // public getData(): Observable<any> {
+  //   return new Observable<any>(observer => {
+  //     this.socket.on('serialport_get_data', data => {
+  //       observer.next(data);
   //     });
   //   });
   // }
-  public getData(): Observable<any> {
+
+  public getSerialPortState(): Observable<any> {
     return new Observable<any>(observer => {
-      this.socket.on('serialport_get_data', res => {
-        observer.next(res);
+      this.socket.on('state', data => {
+        observer.next(data);
       });
     });
   }

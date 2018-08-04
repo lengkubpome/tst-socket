@@ -7,6 +7,7 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
+  serialPort_state: any;
   message: any;
   list = [];
   ioConnection: any;
@@ -24,6 +25,10 @@ export class AppComponent implements OnInit {
       .subscribe(res => {
         this.message = res;
       });
+
+    this.wsService.broadcastSerialPort().subscribe(res => {
+      this.serialPort_state = res;
+    });
 
     this.wsService.getSerialPortList().subscribe(res => {
       this.list = res.map(obj => obj.comName);

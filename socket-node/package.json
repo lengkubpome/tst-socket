@@ -4,7 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-   
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,11 +14,16 @@
     "@types/express": "^4.16.0",
     "@types/serialport": "^6.0.4",
     "@types/socket.io": "^1.4.36",
+    "address": "^1.0.3",
     "express": "^4.16.3",
     "getmac": "^1.4.3",
+    "got": "^8.3.2",
+    "ip-monitor": "^1.0.0",
+    "node-rest-client": "^3.1.0",
+    "request": "^2.87.0",
     "rxjs": "^6.2.2",
     "rxjs-compat": "^6.2.2",
-    "serialport": "^6.2.1",
+    "serialport": "^6.2.2",
     "socket.io": "^2.1.1"
   },
   "devDependencies": {

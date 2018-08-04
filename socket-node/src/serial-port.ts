@@ -1,10 +1,9 @@
-
+import { iSerialPortSetup } from './serial-port';
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/observable/of';
-import * as SerialPort from 'serialport';
+const SerialPort = require('serialport');
 const Readline = require('@serialport/parser-readline');
 
-export interface SerialPortConfig {
+export interface iSerialPortSetup {
   portName: string;
   option: {
     baudRate: any;
@@ -25,76 +24,71 @@ export class tstSerialPort {
   private _isOpen = false;
 
   constructor() {
-    this.listPort();
+    // this.listPort();
   }
 
-  private setup() {
-    try {
-      this.serialport = new SerialPort(
-        this.portName,
-        {
-          // autoOpen: false,
-          autoOpen: true,
-          baudRate: this.baudRate,
-          dataBits: this.dataBits,
-          stopBits: this.stopBits,
-          parity: this.parity,
-        },
-        error => {
-          if (error !== null) {
-            console.log('[SerialPort] setup %s', error);
-          }
-        },
-      );
-      if (!this.serialport.isOpen) {
-        this._isOpen = true;
-      }
-      this.parser = this.serialport.pipe(new Readline({ delimiter: '\r\n' }));
-    } catch (error) {
-      console.log('[SerialPort] setup get catch : %s', error);
-    }
-  }
-
-
-  NodeTime: NodeJS.Timer;
-  timeInterval = 0;
-
-  public openPort(config: SerialPortConfig) {
-    this.portName = config.portName;
-    this.baudRate = config.option.baudRate;
-    this.dataBits = config.option.dataBits;
-    this.stopBits = config.option.stopBits;
-    this.parity = config.option.parity;
-
-    this.setup();
-
-    this.serialport.on('open', () => {
-      console.log('[Serialport] is open');
-    });
-  }
-
-  public getData(): Observable<any> {
+  public openPort(setup: iSerialPortSetup): Observable<any> {
     return new Observable<any>(observer => {
-      this.serialport.on('close', () => {
-        console.log('[SerialPort] is close');
-        observer.complete();
-      });
-      // Open errors will be emitted as an error event
-      this.serialport.on('error', err => {
-        console.log('[SerialPort] is %s', err);
-        observer.error(err);
-      });
+      SerialPort.list()
+        .then(ports => {
+          this.ports = [];
+          ports.forEach(port => {
+            if (port.comName === setup.portName) {
+              this.serialport = new SerialPort(setup.portName, {
+                autoOpen: true,
+                baudRate: setup.option.baudRate,
+                dataBits: setup.option.dataBits,
+                stopBits: setup.option.stopBits,
+                parity: setup.option.parity,
+              });
 
-      this.parser.on('data', (data: string) => {
-        // let buff = new Buffer(data, 'ascii');
-        observer.next(data);
-      });
+              this.parser = this.serialport.pipe(new Readline({ delimiter: '\r\n' }));
 
-      this.NodeTime = setInterval(() => {
-        this.timeInterval++;
-        observer.next(this.timeInterval);
-        console.log(this.timeInterval);
-      }, 1000);
+              this.serialport.on('open', () => {
+                this._isOpen = true;
+                console.log('[Serialport] is opening');
+              });
+
+              this.serialport.on('close', () => {
+                clearInterval(NodeTimeX);
+                console.log('[SerialPort] is closing');
+                this._isOpen = false;
+                observer.complete();
+              });
+              // Open errors will be emitted as an error event
+              this.serialport.on('error', err => {
+                console.log('[SerialPort] ' + err);
+                observer.error('[SerialPort] ' + err);
+              });
+
+              this.parser.on('data', (data: string) => {
+                // let buff = new Buffer(data, 'ascii');
+                observer.next(data);
+              });
+
+              let x = 0;
+              let NodeTimeX = setInterval(() => {
+                x++;
+                observer.next(x);
+                console.log('srp ' + x);
+              }, 1000);
+            }
+
+            // collect list port
+            this.ports.push(port);
+          });
+
+          // waiting 500 milisec. for get state this._isOpen
+          setTimeout(() => {
+            if (!this._isOpen) {
+              console.log("Don't found port name :" + setup.portName);
+              observer.error("Don't found port name :" + setup.portName);
+            }
+          }, 500);
+        })
+        .catch(error => {
+          console.log('[SerailPort] catch ' + error);
+        });
     });
   }
 
@@ -108,24 +102,12 @@ export class tstSerialPort {
     };
   }
 
-  public listPort(): Array<string> {
-    SerialPort.list()
-      .then(ports => {
-        this.ports = [];
-        ports.forEach(port => {
-          this.ports.push(port);
-        });
-      })
-      .catch(err => {
-        console.log(err);
-      });
-
+  public listPort() {
     return this.ports;
   }
 
   public closePort() {
     try {
-      clearInterval(this.NodeTime);
       this.serialport.close();
       this._isOpen = false;
     } catch (error) {
